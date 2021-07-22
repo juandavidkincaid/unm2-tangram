@@ -1,0 +1,66 @@
+{
+    "include": [
+        "./declarations/**/*"
+    ],
+    "exclude": [
+        "./node_modules/**/*"
+    ],
+    "files": [
+        "./src/app.tsx"
+    ],
+    "compilerOptions": {
+        "jsx": "preserve",
+        "strict": true,
+        "noImplicitAny": false,
+        "target": "esnext",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "sourceMap": true,
+        "paths": {
+            "@tangram-src": [
+                "./src/"
+            ],
+            "@tangram-src/*": [
+                "./src/*"
+            ],
+            "@tangram-core": [
+                "./src/core/"
+            ],
+            "@tangram-core/*": [
+                "./src/core/*"
+            ],
+            "@tangram-util": [
+                "./src/util/"
+            ],
+            "@tangram-util/*": [
+                "./src/util/*"
+            ],
+            "@tangram-styling": [
+                "./src/styling/"
+            ],
+            "@tangram-styling/*": [
+                "./src/styling/*"
+            ],
+            "@tangram-res": [
+                "./src/res/"
+            ],
+            "@tangram-res/*": [
+                "./src/res/*"
+            ],
+            "@tangram-components": [
+                "./src/components/"
+            ],
+            "@tangram-components/*": [
+                "./src/components/*"
+            ],
+            "@tangram-game": [
+                "./src/game/"
+            ],
+            "@tangram-game/*": [
+                "./src/game/*"
+            ]
+        }
+    }
+}
