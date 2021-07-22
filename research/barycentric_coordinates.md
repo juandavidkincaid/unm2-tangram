@@ -65,7 +65,7 @@ Using the barycentric coordinate system, this will determine if any vertex of an
 
 # Edge Cases & Caveats
 
-There is one posible edge case that would need to be addressed in this system. The whole sustantial idea of the tangram game is to prove if any other figures in a delimited area are overlaping each other, if this premise returns true then the game is not finished else it is.
+There is one posible edge case that would need to be addressed in this system. The whole sustantial idea of the tangram game is to prove if any other figures in a delimited area are overlaping each other, if this premise returns true then the game is not finished otherwise it is.
 
 <div style="text-align:center">
     <img src="./barycentric_coordinates/figure_overlap_case.svg" style="margin: auto;"/>
