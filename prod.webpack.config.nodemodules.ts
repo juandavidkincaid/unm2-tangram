@@ -120,7 +120,7 @@ const clientConfig: Configuration = Object.assign({}, baseConfig, {
         app: './src/app.tsx'
     },
     output:{
-        path: path.join(process.cwd(), './dist'),
+        path: path.join(process.cwd(), './docs'),
         library: {
             name: 'unm2-tangram',
             type: 'umd'

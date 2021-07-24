@@ -27,7 +27,7 @@ abstract class Shape {
         w: number,
         h: number
     };
-    rotation: number;
+    _rotation: number;
     flipped: boolean;
     hovered: boolean;
     ismoving: boolean;
@@ -45,12 +45,20 @@ abstract class Shape {
             w: size[0],
             h: size[1]
         };
-        this.rotation = rotation;
+        this._rotation = rotation;
         this.flipped = false;
         this.hovered = false;
         this.ismoving = false;
 
         this._game = null;
+    }
+
+    get rotation(){
+        return this._rotation;
+    }
+
+    set rotation(value: number){
+        this._rotation = Math.abs(value % 360);
     }
 
     get game(){
@@ -74,10 +82,12 @@ abstract class Shape {
 
         ctx.fillStyle = theme.c.e();
         ctx.strokeStyle = theme.c.e();
+        ctx.lineWidth = 1;
 
-        if(this.hovered){
+        if(this.hovered || this.selected){
             ctx.fillStyle = theme.c.b();
             ctx.strokeStyle = theme.c.e();
+            ctx.lineWidth = 5;
         }
 
         ctx.save();
@@ -109,6 +119,7 @@ abstract class Shape {
 
         for(const bs of barycentersets){
             ctx.strokeStyle = '#FFFF00';
+            ctx.lineWidth = 1;
 
             ctx.save();
             ctx.beginPath();
@@ -127,6 +138,8 @@ abstract class Shape {
 
     drawDebug(): void{
         this.drawBarycenterTriangles();
+
+        /* this.rotation++; */
     }
 
     init(tangram: Tangram): void{
@@ -150,6 +163,8 @@ abstract class Shape {
             if(this.ismoving){
                 this.x += event.movementX;
                 this.y += event.movementY;
+
+
             }
         }
 
@@ -162,6 +177,12 @@ abstract class Shape {
         if(event.type === 'mouseup'){
             if(this.ismoving){
                 this.ismoving = false;
+            }
+        }
+
+        if(event.type === 'click'){
+            if(this.hovered){
+                this.game.selectedShape = this;
             }
         }
     }
@@ -211,5 +232,7 @@ abstract class Shape {
 }
 
 export {
-    Shape
+    Shape,
+    Vertex,
+    BarycenterSet
 }

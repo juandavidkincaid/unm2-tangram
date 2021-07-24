@@ -15,6 +15,15 @@ class Paralelogram extends Shape {
         }
     }
 
+    get rotation(){
+        return this._rotation;
+    }
+
+    set rotation(value: number){
+        this._rotation = Math.abs(value % 180);
+        console.log(this._rotation);
+    }
+
     getCenterVertex(){
         return {x: this.x, y: this.y};
     }

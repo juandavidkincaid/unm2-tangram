@@ -1,8 +1,19 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useReducer, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import clsx from 'clsx';
 import { EventEmitter } from 'events';
 
+import {
+    mdiRotateLeft,
+    mdiRotateRight,
+    mdiVectorLine,
+    mdiBug,
+    mdiAnchor,
+    mdiDraw,
+    mdiContentSave
+} from '@mdi/js';
+import IconBase from '@mdi/react';
+const Icon = styled(IconBase)``;
 
 import {
     NC,
@@ -59,7 +70,37 @@ const TangramGameViewLayout = styled.div`
             }    
         }
 
-        
+        .controls{
+            display: flex;
+
+            flex-flow: row wrap;
+            justify-content: space-between;
+
+            button{
+                display: grid;
+                width: 100px;
+                height: 100px; 
+
+                grid-template-columns: 1fr;
+                grid-template-rows: 3fr 1fr;
+
+                place-content: center;
+                place-items: center;
+                padding: 10px;
+                background-color: ${theme.c.a};
+                color: ${theme.c.e};
+                border: none;
+                outline: none;
+                font-family: ${theme.fFamily};
+                font-size: 1.2em;
+
+                &:hover, &.on{
+                    background-color: ${theme.c.d};
+                    color: ${theme.c.a};
+                    cursor: pointer;
+                }
+            }
+        }
     }
 
     .mobile{
@@ -119,7 +160,7 @@ const TangramGameViewLayout = styled.div`
         }
     }
 
-    header, footer, .canvas-holder{
+    header, footer, .canvas-holder, button{
         box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
         transition: 0.3s;
         background-color: ${theme.c.a};
@@ -132,12 +173,9 @@ const TangramGameViewLayout = styled.div`
 
 const TangramGameView = NC('TangramGameView', ({ children }) => {
     const canvasRef = useRef<null | HTMLCanvasElement>(null);
+    const forceUpdate = useReducer((s)=>s+1, 0)[1];
     const vp = useViewport();
-    const store = useMemo<{
-        tangram: null | Tangram
-    }>(() => ({
-        tangram: null
-    }), []);
+    const tangram = useMemo<Tangram>(() => new Tangram(), []);
 
     useEffect(() => {
         if (canvasRef.current) {
@@ -146,18 +184,21 @@ const TangramGameView = NC('TangramGameView', ({ children }) => {
             if (ctx) {
                 canvas.width = canvas.clientWidth;
                 canvas.height = canvas.clientHeight;
-                store.tangram = new Tangram(ctx, canvas, process.env.NODE_ENV === 'development');
-                store.tangram.startGame();
+                tangram.forceReactUpdate = forceUpdate;
+                tangram.canvas = canvas;
+                tangram.ctx = ctx;
+                tangram.settleSize();
+                tangram.startGame();
             }
         }
     }, []);
 
     useEffect(()=>{
-        if(canvasRef.current && store.tangram){
+        if(canvasRef.current){
             const canvas = canvasRef.current;
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
-            store.tangram.settleSize();
+            tangram.settleSize();
         }
     }, [vp]);
 
@@ -175,9 +216,51 @@ const TangramGameView = NC('TangramGameView', ({ children }) => {
                 <canvas ref={canvasRef} />
             </div>
             <div className='controls'>
-                <button>
-                    
+                <button onClick={()=>{
+                    if(tangram.selectedShape){
+                        tangram.selectedShape.rotation += 45;
+                    }
+                }}>
+                    <Icon path={mdiRotateLeft} size={1.5}/>
+                    <span>Rotar 45°</span>
                 </button>
+                <button 
+                    className={tangram.flags.debugLevel >= 1 ? 'on' : 'off'}
+                    onClick={()=>{tangram.flags.debugLevel = (tangram.flags.debugLevel + 1) % 4; tangram.forceReactUpdate();}}
+                >
+                    <Icon path={mdiBug} size={1.5}/>
+                    <span>Debug {tangram.flags.debugLevel >= 1 ? tangram.flags.debugLevel : 'Off'}</span>
+                </button>
+                {/* <button 
+                    className={tangram.flags.snaping ? 'on' : 'off'}
+                    onClick={()=>{tangram.flags.snaping = !tangram.flags.snaping; tangram.forceReactUpdate();}}
+                >
+                    <Icon path={mdiVectorLine} size={1.5}/>
+                    <span>Snaping {tangram.flags.snaping ? 'On' : 'Off'}</span>
+                </button> */}
+                {tangram.flags.debugLevel >= 1 && <>
+                    <button 
+                        onClick={()=>tangram.setAnchors()}
+                    >
+                        <Icon path={mdiAnchor} size={1.5}/>
+                        <span>Fijar Anclas</span>
+                    </button>
+                    <button
+                        className={tangram.flags.drawLevel ? 'on' : 'off'}
+                        onClick={()=>{
+                            tangram.flags.drawLevel = !tangram.flags.drawLevel; tangram.forceReactUpdate();
+                        }}
+                    >
+                        <Icon path={mdiDraw} size={1.5}/>
+                        <span>Dibujar Nivel</span>
+                    </button>
+                    <button onClick={()=>{
+                        tangram.saveLevel();
+                    }}>
+                        <Icon path={mdiContentSave} size={1.5}/>
+                        <span>Guardar Nivel</span>
+                    </button>
+                </>}
             </div>
         </main>
         <div className='mobile'>
