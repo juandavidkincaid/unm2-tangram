@@ -24,7 +24,9 @@ const theme = Theme.createTheme({
         e: '#FF9D70'
     },
     fontSize: '1em',
-    fontFamily: "'Zen Tokyo Zoo', cursive"
+    fontFamily: "'Teko', sans-serif",
+    fontTitle: "'Zen Tokyo Zoo', cursive",
+    fTitle: (th)=>th.fontTitle
 }, 'function');
 
 const AppTheme: InstanceType<typeof Theme> = Theme.accessTheme(theme);

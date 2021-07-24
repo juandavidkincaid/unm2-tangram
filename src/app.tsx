@@ -22,7 +22,7 @@ const GlobalStyle = createGlobalStyle`
         place-content: start;
         place-items: start;
         grid-template-columns: 1fr;
-        grid-template-rows: 1fr;frfr
+        grid-template-rows: 1fr;
         font-family: ${theme.fFamily};
         font-size: calc(${theme.fSize} * 1);
         ${ViewportStyle('MobileExtended')}{
@@ -46,6 +46,7 @@ ReactDOM.render(<React.StrictMode>
             <link rel="preconnect" href="https://fonts.googleapis.com" />
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
             <link href="https://fonts.googleapis.com/css2?family=Zen+Tokyo+Zoo&display=swap" rel="stylesheet" />
+            <link href="https://fonts.googleapis.com/css2?family=Teko&display=swap" rel="stylesheet"/>
         </Helmet>
         <AppTheme.Provider>
             <GlobalStyle />
