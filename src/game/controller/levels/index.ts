@@ -1,7 +1,9 @@
 import cat1 from './cat1';
 
-const levels = [
+const Levels = [
     cat1
 ];
 
-export default levels;
+export {
+    Levels
+};

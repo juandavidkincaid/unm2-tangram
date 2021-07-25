@@ -110,33 +110,41 @@ class Level implements Drawable{
     }
 
     static importLevel(levelSrc: string | GameLevel){
-        if(typeof levelSrc === 'string'){
-            levelSrc = JSON.parse(levelSrc) as GameLevel;
-        }
+        return (game: Tangram)=>{
+            if(typeof levelSrc === 'string'){
+                levelSrc = JSON.parse(levelSrc) as GameLevel;
+            }
+    
+            const level = new Level();
+            const shapes = new Set(Tangram.getShapes());
+            level.shapes = new Set(shapes);
 
-        const level = new Level();
-        const shapes = new Set(Tangram.getShapes());
-        level.shapes = new Set(shapes);
+            level.init(game);
 
-        for(const shapeSrc of levelSrc.shapes){
             for(const shape of shapes){
-                if(shape.store.id === shapeSrc.id){
-                    shape.x = shapeSrc.x;
-                    shape.y = shapeSrc.y;
-                    shape.rotation = shapeSrc.rotation;
-                    shape.size.w = shapeSrc.size[0];
-                    shape.size.h = shapeSrc.size[1];
-
-                    shapes.delete(shape);
-                    break;
+                shape.init(game);
+            }
+    
+            for(const shapeSrc of levelSrc.shapes){
+                for(const shape of shapes){
+                    if(shape.store.id === shapeSrc.id){
+                        shape.x = shapeSrc.x;
+                        shape.y = shapeSrc.y;
+                        shape.rotation = shapeSrc.rotation;
+                        shape.size.w = shapeSrc.size[0];
+                        shape.size.h = shapeSrc.size[1];
+    
+                        shapes.delete(shape);
+                        break;
+                    }
                 }
             }
+    
+            level.vertices = new Set(levelSrc.vertices);
+            level.errorIndex = levelSrc.errorIndex;
+    
+            return level;
         }
-
-        level.vertices = new Set(levelSrc.vertices);
-        level.errorIndex = levelSrc.errorIndex;
-
-        return level;
     }
 
     static exportLevel(level: Level){

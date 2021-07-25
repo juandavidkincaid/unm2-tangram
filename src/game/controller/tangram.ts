@@ -11,16 +11,15 @@ import {
     Square,
     Paralelogram,
     Level,
-    LevelEditor
+    LevelEditor,
+    Levels
 } from '@tangram-game';
-
-import Levels from '@tangram-game/levels';
 
 
 class Tangram implements Drawable{
     store: {
         levels: Level[],
-        currentLevel: Level | null,
+        currentLevel: Level,
         levelEditor: LevelEditor,
         shapes: Set<Shape>,
 
@@ -51,8 +50,6 @@ class Tangram implements Drawable{
         bindAllMethods(this);
 
         this.store = {
-            levels: [],
-            currentLevel: null,
             levelEditor: new LevelEditor(),
             shapes: new Set(),
 
@@ -70,18 +67,23 @@ class Tangram implements Drawable{
             flags: {
                 snap: false,
                 debugLevel: 0,
-                drawModes: new Set(['shapes'])
+                drawModes: new Set(['shapes', 'level'])
             },
 
             states: {
                 tickerId: null,
                 selected: null
             }
-        }
+        } as any;
     }
 
     startGame() {
         const shapes = Tangram.getShapes();
+
+        const levels = Levels.map(l=>l(this));
+
+        this.store.levels = levels;
+        this.store.currentLevel = levels[0];
 
         for(const shape of shapes){
             shape.init(this);
@@ -211,11 +213,15 @@ class Tangram implements Drawable{
     draw(){
         this.ctx.clearRect(0, 0, this.size.w, this.size.h);
 
+        if(this.drawModes.has('level')){
+            this.store.currentLevel.draw();
+        }
+
         if(this.drawModes.has('shapes')){
             for(const shape of this.shapes){
                 shape.draw();
             }
-        }  
+        }
 
         if(this.drawModes.has('editor-anchors') || this.drawModes.has('editor-level')){
             this.store.levelEditor.draw();
@@ -223,6 +229,10 @@ class Tangram implements Drawable{
     }
 
     drawDebug(){
+        if(this.drawModes.has('level')){
+            this.store.currentLevel.drawDebug();
+        }
+
         if(this.drawModes.has('shapes')){
             for(const shape of this.shapes){
                 shape.drawDebug();
