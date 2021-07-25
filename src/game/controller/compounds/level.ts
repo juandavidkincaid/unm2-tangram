@@ -1,5 +1,7 @@
 import {
-    bindAllMethods
+    bindAllMethods,
+    downloadBase64,
+    b64enc
 } from '@tangram-util';
 
 import {
@@ -23,12 +25,14 @@ class Level implements Drawable{
     }
     shapes: Set<Shape>;
     vertices: Set<Vertex>;
+    errorIndex: number;
 
     constructor(){
         bindAllMethods(this);
 
         this.shapes = new Set();
         this.vertices = new Set();
+        this.errorIndex = 15;
 
         this.store = {
             game: null
@@ -78,6 +82,33 @@ class Level implements Drawable{
         
     }
 
+    proveLevel(){
+        const levelShapes = new Set(this.shapes);
+        const gameShapes = new Set(this.game.shapes);
+
+        const resolved = new Set<Shape>();
+
+        for(const levelShape of levelShapes){
+            for(const gameShape of gameShapes){
+                if(levelShape.store.id === gameShape.store.id){
+                    
+                    let test = true;
+                    test = test && levelShape.rotation === gameShape.rotation;
+                    test = test && Math.abs(levelShape.x - gameShape.x) < this.errorIndex;
+                    test = test && Math.abs(levelShape.y - gameShape.y) < this.errorIndex;
+                    
+                    if(test){
+                        resolved.add(gameShape);
+                        gameShapes.delete(gameShape);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return gameShapes.size === 0;
+    }
+
     static importLevel(levelSrc: string | GameLevel){
         if(typeof levelSrc === 'string'){
             levelSrc = JSON.parse(levelSrc) as GameLevel;
@@ -103,12 +134,27 @@ class Level implements Drawable{
         }
 
         level.vertices = new Set(levelSrc.vertices);
+        level.errorIndex = levelSrc.errorIndex;
 
         return level;
     }
 
-    static exportLevel(){
+    static exportLevel(level: Level){
+        const levelSrc: GameLevel = {
+            vertices: [...level.vertices],
+            shapes: [...level.shapes].map(s=>({
+                id: s.store.id,
+                x: s.x,
+                y: s.y,
+                size: [s.size.w, s.size.h],
+                rotation: s.rotation,
+            })),
+            errorIndex: level.errorIndex
+        };
 
+        const encoded = JSON.stringify(levelSrc, null, 4);
+        const encodedB64 = b64enc(encoded);
+        downloadBase64(encodedB64, 'application/json', 'level_export.json')
     }
 }
 
