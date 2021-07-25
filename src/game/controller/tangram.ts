@@ -205,7 +205,7 @@ class Tangram implements Drawable{
                 shape.draw();
             }
         }
-/* 
+        /* 
         if(this.flags.drawAnchors){
             for(const anchor of this.anchors){
                 anchor.draw();
@@ -214,45 +214,7 @@ class Tangram implements Drawable{
                     anchor.drawDebug();
                 }
             }
-        }
-        if(this.flags.drawLevel){
-            const ctx = this.ctx;
-            
-            ctx.strokeStyle = theme.c.e();
-            ctx.lineWidth = 3;
-
-
-            ctx.save();
-            ctx.beginPath();
-
-            const anchors = [...this.anchors]
-                .filter(a=>a.selected)
-                .sort((a, b)=>a.selectedAt - b.selectedAt);
-            
-            for(const [index, vertex] of anchors.entries()){
-                if(index === 0){
-                    ctx.moveTo(vertex.x, vertex.y);
-                }else{
-                    ctx.lineTo(vertex.x, vertex.y);
-                }
-            }
-
-            ctx.closePath();
-
-            ctx.stroke();
-
-            ctx.restore();
-        }
-        
-        if(!this.flags.drawAnchors){
-            for (const shape of this.shapes) {
-                shape.draw();
-    
-                if (this.flags.debugLevel >= 1) {
-                    shape.drawDebug();
-                }
-            }
-        }      */   
+        }*/   
     }
 
     drawDebug(){
