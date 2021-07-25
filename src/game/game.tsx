@@ -14,7 +14,9 @@ import {
     mdiMenuRight,
     mdiMenuLeft,
     mdiMenuDown,
-    mdiMenuUp
+    mdiMenuUp,
+    mdiArrowLeft,
+    mdiArrowRight
 } from '@mdi/js';
 import IconBase from '@mdi/react';
 const Icon = styled(IconBase)``;
@@ -277,6 +279,19 @@ const TangramGameView = NC('TangramGameView', ({ children }) => {
                     <span>Snapping {tangram.store.flags.snap ? 'On' : 'Off'}</span>
                 </button>
                 <button 
+                    onClick={()=>{tangram.store.flags.debugLevel = (tangram.store.flags.debugLevel + 1) % 4; tangram.forceReactUpdate();}}
+                >
+                    <Icon path={mdiArrowLeft} size={1.5}/>
+                    <span>Anterior Nivel</span>
+                </button>
+                <button 
+                    onClick={()=>{tangram.store.flags.debugLevel = (tangram.store.flags.debugLevel + 1) % 4; tangram.forceReactUpdate();}}
+                >
+                    <Icon path={mdiArrowRight} size={1.5}/>
+                    <span>Siguiente Nivel</span>
+                </button>
+
+                <button 
                     className={tangram.store.flags.debugLevel >= 1 ? 'on' : 'off'}
                     onClick={()=>{tangram.store.flags.debugLevel = (tangram.store.flags.debugLevel + 1) % 4; tangram.forceReactUpdate();}}
                 >
@@ -284,27 +299,35 @@ const TangramGameView = NC('TangramGameView', ({ children }) => {
                     <span>Debug {tangram.store.flags.debugLevel >= 1 ? tangram.store.flags.debugLevel : 'Off'}</span>
                 </button>
                 {tangram.store.flags.debugLevel >= 1 && <>
-                    {/* <button 
-                        onClick={()=>tangram.setAnchors()}
+                    <button 
+                        className={tangram.drawModes.has('editor-anchors') ? 'on' : 'off'}
+                        onClick={()=>{
+                            tangram.store.levelEditor.edit();
+                        }}
                     >
                         <Icon path={mdiAnchor} size={1.5}/>
                         <span>Fijar Anclas</span>
                     </button>
                     <button
-                        className={tangram.store.flags.drawLevel ? 'on' : 'off'}
+                        className={tangram.drawModes.has('editor-level') ? 'on' : 'off'}
                         onClick={()=>{
-                            tangram.store.flags.drawLevel = !tangram.flags.drawLevel; tangram.forceReactUpdate();
+                            if(tangram.drawModes.has('editor-level')){
+                                tangram.drawModes.delete('editor-level');
+                            }else{
+                                tangram.drawModes.add('editor-level');
+                            }
+                            tangram.forceReactUpdate();
                         }}
                     >
                         <Icon path={mdiDraw} size={1.5}/>
                         <span>Dibujar Nivel</span>
                     </button>
                     <button onClick={()=>{
-                        tangram.saveLevel();
+                        tangram.store.levelEditor.export();
                     }}>
                         <Icon path={mdiContentSave} size={1.5}/>
-                        <span>Guardar Nivel</span>
-                    </button> */}
+                        <span>Exportar Nivel</span>
+                    </button>
                 </>}
             </div>
         </main>

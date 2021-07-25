@@ -10,14 +10,18 @@ import {
     Triangle,
     Square,
     Paralelogram,
-    Level
+    Level,
+    LevelEditor
 } from '@tangram-game';
+
+import Levels from '@tangram-game/levels';
 
 
 class Tangram implements Drawable{
     store: {
         levels: Level[],
         currentLevel: Level | null,
+        levelEditor: LevelEditor,
         shapes: Set<Shape>,
 
         canvas: HTMLCanvasElement | null,
@@ -34,7 +38,7 @@ class Tangram implements Drawable{
         flags: {
             snap: boolean,
             debugLevel: number,
-            drawModes: Set<'shapes' | 'level'>
+            drawModes: Set<'shapes' | 'level' | 'editor-level' | 'editor-anchors'>
         },
 
         states: {
@@ -49,6 +53,7 @@ class Tangram implements Drawable{
         this.store = {
             levels: [],
             currentLevel: null,
+            levelEditor: new LevelEditor(),
             shapes: new Set(),
 
             canvas: null,
@@ -91,6 +96,8 @@ class Tangram implements Drawable{
             sh.rotation = (Math.floor(Math.random() * 100) * 45) % 360;
             return sh;
         });
+
+        this.store.levelEditor.init(this);
 
         this.addHandlers();
         this.startTicker();
@@ -160,6 +167,10 @@ class Tangram implements Drawable{
         return this.store.flags.drawModes;
     }
 
+    set drawModes(drawModes: Tangram["store"]["flags"]["drawModes"]){
+        this.store.flags.drawModes = drawModes;
+    }
+
     settleSize(){
         this.store.size = {
             w: this.canvas.width,
@@ -204,17 +215,11 @@ class Tangram implements Drawable{
             for(const shape of this.shapes){
                 shape.draw();
             }
+        }  
+
+        if(this.drawModes.has('editor-anchors') || this.drawModes.has('editor-level')){
+            this.store.levelEditor.draw();
         }
-        /* 
-        if(this.flags.drawAnchors){
-            for(const anchor of this.anchors){
-                anchor.draw();
-    
-                if (this.flags.debugLevel >= 1) {
-                    anchor.drawDebug();
-                }
-            }
-        }*/   
     }
 
     drawDebug(){
@@ -222,6 +227,10 @@ class Tangram implements Drawable{
             for(const shape of this.shapes){
                 shape.drawDebug();
             }
+        }
+
+        if(this.drawModes.has('editor-anchors') || this.drawModes.has('editor-level')){
+            this.store.levelEditor.drawDebug();
         }
 
         if (this.store.flags.debugLevel >= 2) {
@@ -312,15 +321,13 @@ class Tangram implements Drawable{
             }
         }
 
-       /*  if(this.flags.drawAnchors){
-            for (const anchor of this.anchors) {
-                anchor.onMouseEvent(
-                    event.offsetX,
-                    event.offsetY,
-                    event
-                );
-            }
-        } */
+        if(this.drawModes.has('editor-anchors') || this.drawModes.has('editor-level')){
+            this.store.levelEditor.onMouseEvent(
+                event.offsetX,
+                event.offsetY,
+                event
+            );
+        }
     }
 
     onKeyEvent(event: KeyboardEvent){

@@ -1,5 +1,7 @@
 import {
-    bindAllMethods
+    bindAllMethods,
+    downloadBase64,
+    b64enc
 } from '@tangram-util';
 
 import {
@@ -7,32 +9,62 @@ import {
 } from '@tangram-core';
 
 import {
+    Vertex,
+    BarycenterSet,
+    BarycenterCoord,
+    Drawable,
+    GameLevel,
+    Shape,
+
     Tangram
-} from '.';
+} from '@tangram-game';
 
-class Anchor {
-    x: number;
-    y: number;
-    selected: boolean;
-    selectedAt: number;
+class Anchor implements Drawable{
+    store: {
+        x: number,
+        y: number,
+        selected: number | null,
 
-
-    _game: Tangram | null;
+        game: Tangram | null
+    }
 
     constructor(x: number, y: number) {
         bindAllMethods(this);
 
-        this.x = x;
-        this.y = y;
-        this.selected = false;
-        this.selectedAt = NaN;
-
-        this._game = null;
+        this.store = {
+            x: x,
+            y: y,
+            selected: null,
+    
+            game: null
+        }
     }
 
-    get game(){
-        if(this._game){
-            return this._game;
+    init(tangram: Tangram): void {
+        this.store.game = tangram;
+    }
+
+    /* getters / setters */
+
+    get x() {
+        return this.store.x;
+    }
+
+    set x(v: number) {
+        this.store.x = Math.min(Math.max(v, 20), this.game.size.w - 20);
+    }
+
+    get y() {
+        return this.store.y;
+    }
+
+    set y(v: number) {
+        this.store.y = Math.min(Math.max(v, 20), this.game.size.h - 20);
+    }
+
+    get game() {
+        if (this.store.game) {
+            return this.store.game;
         }
         throw new Error('No game is bound');
     }
@@ -41,7 +73,7 @@ class Anchor {
         const ctx = this.game.ctx;
         
         ctx.strokeStyle = '#00FF00';
-        if(this.selected){
+        if(this.store.selected !== null){
             ctx.strokeStyle = '#0000FF';
         }
         ctx.lineWidth = 1;
@@ -75,10 +107,6 @@ class Anchor {
 
     }
 
-    init(tangram: Tangram): void{
-        this._game = tangram;
-    }
-
     isCoordOver(x: number, y: number){
         return (
             this.x-8 < x && this.y-8 < y
@@ -90,8 +118,11 @@ class Anchor {
     onMouseEvent(x: number, y: number, event: MouseEvent){
         if(event.type === 'click'){
             if(this.isCoordOver(x, y)){
-                this.selected = !this.selected;
-                this.selectedAt = Date.now();
+                if(this.store.selected !== null){
+                    this.store.selected = null;
+                }else{
+                    this.store.selected = Date.now();
+                }
             }
         }
     }
