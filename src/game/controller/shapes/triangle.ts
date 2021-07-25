@@ -2,7 +2,9 @@ import {
     theme
 } from '@tangram-core';
 
-import {Shape} from '.';
+import {
+    Shape
+} from '@tangram-game/shapes/shape';
 
 class Triangle extends Shape {
     get drawCoords(){
@@ -14,30 +16,47 @@ class Triangle extends Shape {
         }
     }
 
-    getBaseVertices(){
-        return [
-            {x: this.drawCoords.x, y: this.drawCoords.y},
-            {x: this.drawCoords.x + this.size.w, y: this.drawCoords.y},
-            {x: this.drawCoords.x + this.size.w, y: this.drawCoords.y + this.size.w},
+    getRelativeCenterDeltas(){
+        const vertices = [
+            {x: 0, y: 0},
+            {x: this.size.w, y: 0},
+            {x: 0, y: this.size.h},
         ];
-    }
 
-    getCenterVertex(){
-        const vertices = this.getBaseVertices();
         const sums = vertices.reduce((sums, v)=>{
             sums.xSum += v.x;
             sums.ySum += v.y;
             return sums;
         }, {xSum: 0, ySum: 0});
-        return {
+        
+        const center = {
             x: sums.xSum / vertices.length,
             y: sums.ySum / vertices.length,
-        }
+        };
+
+        return vertices.map(v=>{
+            v.x -= center.x;
+            v.y -= center.y;
+            return v;
+        });
+    }
+
+    getBaseVertices(){
+        const centerDeltaVxs = this.getRelativeCenterDeltas();
+        return centerDeltaVxs.map(dvx=>{
+            dvx.x = this.x + dvx.x;
+            dvx.y = this.y + dvx.y;
+            return dvx;
+        });
+    }
+
+    getCenterVertex(){
+        return {x: this.x, y: this.y};
     }
 
     getVertices(){
         return this.getBaseVertices().map(
-            v=>this.rotateVertex(
+            v=>Shape.rotateVertex(
                 this.getCenterVertex(),
                 v,
                 this.rotation
@@ -46,17 +65,18 @@ class Triangle extends Shape {
     }
 
     getBarycenterSets(){
+        const baseVxs = this.getBaseVertices();
         return [
             {
-                a: {x: this.drawCoords.x, y: this.drawCoords.y},
-                b: {x: this.drawCoords.x + this.size.w, y: this.drawCoords.y},
-                c: {x: this.drawCoords.x + this.size.w, y: this.drawCoords.y + this.size.w},
+                a: baseVxs[0],
+                b: baseVxs[1],
+                c: baseVxs[2],
             }
         ].map(
             bs=>{
-                bs.a = this.rotateVertex(this.getCenterVertex(), bs.a, this.rotation);
-                bs.b = this.rotateVertex(this.getCenterVertex(), bs.b, this.rotation);
-                bs.c = this.rotateVertex(this.getCenterVertex(), bs.c, this.rotation);
+                bs.a = Shape.rotateVertex(this.getCenterVertex(), bs.a, this.rotation);
+                bs.b = Shape.rotateVertex(this.getCenterVertex(), bs.b, this.rotation);
+                bs.c = Shape.rotateVertex(this.getCenterVertex(), bs.c, this.rotation);
                 return bs;
             }
         );

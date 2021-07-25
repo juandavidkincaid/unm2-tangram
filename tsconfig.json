@@ -56,10 +56,10 @@
                 "./src/components/*"
             ],
             "@tangram-game": [
-                "./src/game/"
+                "./src/game/controller/"
             ],
             "@tangram-game/*": [
-                "./src/game/*"
+                "./src/game/controller/*"
             ]
         }
     }

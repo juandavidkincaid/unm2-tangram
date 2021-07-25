@@ -21,7 +21,7 @@ const aliases = {
     '@tangram-res': path.resolve(__dirname, 'src/res'),
     '@tangram-styling': path.resolve(__dirname, 'src/styling'),
     '@tangram-components': path.resolve(__dirname, 'src/components'),
-    '@tangram-game': path.resolve(__dirname, 'src/game')
+    '@tangram-game': path.resolve(__dirname, 'src/game/controller')
 }
 
 const baseConfig: Configuration = {
@@ -159,6 +159,7 @@ const clientConfig: Configuration = Object.assign({}, baseConfig, {
             title: 'Tangram Game',
             filename: 'index.html',
             template: './src/app.ejs',
+            favicon: './src/res/logo.svg',
             xhtml: true
         }),
         new webpack.DefinePlugin({

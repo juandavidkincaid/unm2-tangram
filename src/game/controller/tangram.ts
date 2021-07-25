@@ -1,131 +1,89 @@
-import {
-    bindAllMethods
-} from '@tangram-util';
+import { bindAllMethods } from '@tangram-util';
 
 import {
     theme
 } from '@tangram-core';
 
 import {
+    Drawable,
     Shape,
-    Vertex,
-    Square,
     Triangle,
-    Paralelogram
-} from './shapes';
-
-import {
-    Anchor
-} from './anchor';
-
-class Tangram {
-    anchors: Set<Anchor>;
-    shapes: Set<Shape>;
-    selectedShape: Shape | null;
-    hoveredShape: Shape | null;
-    tickerId: number | null;
-    flags: {
-        snaping: boolean,
-        debugLevel: number,
-        drawLevel: boolean,
-        drawAnchors: boolean
-    };
-
-    _size: {
-        w: number,
-        h: number
-    } | null;
-    _canvas: HTMLCanvasElement | null;
-    _ctx: CanvasRenderingContext2D | null;
-    _forceReactUpdate: (() => void) | null;
+    Square,
+    Paralelogram,
+    Level
+} from '@tangram-game';
 
 
-    constructor() {
+class Tangram implements Drawable{
+    store: {
+        levels: Level[],
+        currentLevel: Level | null,
+        shapes: Set<Shape>,
+
+        canvas: HTMLCanvasElement | null,
+        ctx: CanvasRenderingContext2D | null,
+
+        size: {
+            w: number,
+            h: number
+        },
+        sizeSet: boolean,
+
+        forceReactUpdate: (() => void) | null,
+
+        flags: {
+            snap: boolean,
+            debugLevel: number,
+            drawModes: Set<'shapes' | 'level'>
+        },
+
+        states: {
+            tickerId: number | null,
+            selected: Shape | null
+        }
+    }
+
+    constructor(){
         bindAllMethods(this);
 
-        this._ctx = null;
-        this._canvas = null;
-        this._size = null;
-        this._forceReactUpdate = null;
+        this.store = {
+            levels: [],
+            currentLevel: null,
+            shapes: new Set(),
 
-        this.anchors = new Set();
-        this.shapes = new Set();
-        this.selectedShape = null;
-        this.hoveredShape = null;
-        this.tickerId = null;
+            canvas: null,
+            ctx: null,
 
-        this.flags = {
-            snaping: false,
-            debugLevel: 0,
-            drawLevel: false,
-            drawAnchors: false
-        };
-    }
+            size: {
+                w: 0,
+                h: 0
+            },
+            sizeSet: false,
 
-    set ctx(ctx: CanvasRenderingContext2D) {
-        this._ctx = ctx;
-    }
+            forceReactUpdate: null,
 
-    get ctx() {
-        if (this._ctx) {
-            return this._ctx;
+            flags: {
+                snap: false,
+                debugLevel: 0,
+                drawModes: new Set(['shapes'])
+            },
+
+            states: {
+                tickerId: null,
+                selected: null
+            }
         }
-        throw new Error('ctx not bound');
-    }
-
-    set canvas(canvas: HTMLCanvasElement) {
-        this._canvas = canvas;
-    }
-
-    get canvas() {
-        if (this._canvas) {
-            return this._canvas;
-        }
-        throw new Error('canvas not bound');
-    }
-
-    set size(size: {
-        w: number,
-        h: number
-    }) {
-        this._size = size;
-    }
-
-    get size() {
-        if (this._size) {
-            return this._size;
-        }
-        throw new Error('size not bound');
-    }
-
-    set forceReactUpdate(fn: () => void) {
-        this._forceReactUpdate = fn;
-    }
-
-    get forceReactUpdate() {
-        if (this._forceReactUpdate) {
-            return this._forceReactUpdate;
-        }
-        throw new Error('forceReactUpdate not bound');
-    }
-
-    settleSize() {
-        this.size = {
-            w: this.canvas.width,
-            h: this.canvas.height
-        };
     }
 
     startGame() {
-        const shapes = [
-            new Square('sq1', 100, 100, [1, 1], 45),
-            new Triangle('tr1', 100, 100, [1, 1], -45),
-            new Triangle('tr2', 100, 100, [2, 2], 45),
-            new Triangle('tr3', 100, 100, [2, 2], 135),
-            new Triangle('tr4', 100, 100, [1, 1], 225),
-            new Triangle('tr5', 100, 100, [Math.SQRT2, Math.SQRT2], 90),
-            new Paralelogram('pr1', 100, 100, [Math.SQRT2 / 2, Math.SQRT2 / 2], 0),
-        ].map(sh => {
+        const shapes = Tangram.getShapes();
+
+        for(const shape of shapes){
+            shape.init(this);
+            this.shapes.add(shape);
+        }
+        
+        shapes.map(sh => {
             sh.size.w *= 50;
             sh.size.h *= 50;
             sh.x = (Math.floor(Math.random() * 10000) % (this.size.w - 200)) + 200;
@@ -134,28 +92,120 @@ class Tangram {
             return sh;
         });
 
-        this.addShapes(shapes);
-
         this.addHandlers();
         this.startTicker();
     }
 
+
+    /* getters / setters */
+
+    set canvas(canvas: HTMLCanvasElement){
+        const ctx = canvas.getContext('2d');
+        if(ctx){
+            this.store.canvas = canvas;
+            this.store.ctx = ctx;
+            this.settleSize();
+        }else{
+            throw new Error('Unable to get CanvasRenderingContext2D');
+        }
+        
+    }
+
+    get canvas(){
+        if(this.store.canvas){
+            return this.store.canvas;
+        }
+        throw new Error('canvas not bound');
+    }
+
+    set forceReactUpdate(fn: () => void) {
+        this.store.forceReactUpdate = fn;
+    }
+
+    get forceReactUpdate() {
+        if (this.store.forceReactUpdate) {
+            return this.store.forceReactUpdate;
+        }
+        throw new Error('forceReactUpdate not bound');
+    }
+
+
+    get ctx(){
+        if (this.store.ctx) {
+            return this.store.ctx;
+        }
+        throw new Error('ctx not bound');
+    }
+
+    get size(){
+        if(this.store.sizeSet){
+            return this.store.size;
+        }
+        throw new Error('Size has not been settled');
+    }
+
+    get shapes(){
+        return this.store.shapes;
+    }
+
+    get selected(){
+        return this.store.states.selected;
+    }
+
+    set selected(shape: Shape | null){
+        this.store.states.selected = shape;
+    }
+
+    get drawModes(){
+        return this.store.flags.drawModes;
+    }
+
+    settleSize(){
+        this.store.size = {
+            w: this.canvas.width,
+            h: this.canvas.height
+        };
+        this.store.sizeSet = true;
+    }
+
+    /* Tickering */
+
     startTicker() {
-        this.tickerId = window.requestAnimationFrame(this.tick);
+        this.store.states.tickerId = window.requestAnimationFrame(this.tick);
     }
 
     stopTicker() {
-        if (this.tickerId !== null) {
-            window.cancelAnimationFrame(this.tickerId);
-            this.tickerId = null;
+        if (this.store.states.tickerId !== null) {
+            window.cancelAnimationFrame(this.store.states.tickerId);
+            this.store.states.tickerId = null;
         }
     }
 
-    tick() {
+    tick(){
+        this.draw();
+
+        if(this.store.flags.debugLevel >= 1){
+            this.tickDebug();
+        }
+
+        this.store.states.tickerId = window.requestAnimationFrame(this.tick);
+    }
+
+    tickDebug(){
+        this.drawDebug();
+    }
+
+    /* Rendering */
+
+    draw(){
         this.ctx.clearRect(0, 0, this.size.w, this.size.h);
 
-        this.canvas.style.cursor = this.hoveredShape !== null ? 'pointer' : 'default';
-
+        if(this.drawModes.has('shapes')){
+            for(const shape of this.shapes){
+                shape.draw();
+            }
+        }
+/* 
         if(this.flags.drawAnchors){
             for(const anchor of this.anchors){
                 anchor.draw();
@@ -202,57 +252,17 @@ class Tangram {
                     shape.drawDebug();
                 }
             }
-    
-            if (this.flags.snaping) {
-                this.tickSnaping();
+        }      */   
+    }
+
+    drawDebug(){
+        if(this.drawModes.has('shapes')){
+            for(const shape of this.shapes){
+                shape.drawDebug();
             }
         }
 
-        if (this.flags.debugLevel >= 1) {
-            this.tickDebug();
-        }
-
-        this.tickerId = window.requestAnimationFrame(this.tick);
-    }
-
-    tickSnaping() {
-        const visited = new Set<Shape>();
-        for (const shapeA of this.shapes) {
-
-            const vertexAC = shapeA.getCenterVertex();
-            visited.add(shapeA);
-
-            for (const shapeB of [...this.shapes].filter(s => !visited.has(s))) {
-                const vertexBC = shapeB.getCenterVertex();
-
-                if (shapeA.distanceVertices(vertexAC, vertexBC) < 100) {
-                    const verticesA = shapeA.getVertices();
-                    const verticesB = shapeB.getVertices();
-
-                    for (const vertexA of verticesA) {
-                        for (const vertexB of verticesB) {
-
-                            if (shapeA.distanceVertices(vertexA, vertexB) < 30) {
-                                const origin = Object.is(this.selectedShape, shapeA) ? shapeA : shapeB;
-
-                                const originVertex = Object.is(this.selectedShape, shapeA) ? vertexA : vertexB;
-                                const remoteVertex = !Object.is(this.selectedShape, shapeA) ? vertexA : vertexB;
-
-                                const [mx, my] = [remoteVertex.x - originVertex.x, remoteVertex.y - originVertex.y];
-                                origin.x += mx;
-                                origin.y += my;
-
-                                /* this.selectedShape = null; */
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    tickDebug() {
-        if (this.flags.debugLevel >= 2) {
+        if (this.store.flags.debugLevel >= 2) {
             const visited = new Set<Shape>();
             for (const shapeA of this.shapes) {
 
@@ -279,7 +289,7 @@ class Tangram {
             }
         }
 
-        if (this.flags.debugLevel >= 3) {
+        if (this.store.flags.debugLevel >= 3) {
             const visited = new Set<Shape>();
             for (const shapeA of this.shapes) {
 
@@ -289,7 +299,7 @@ class Tangram {
                 for (const shapeB of [...this.shapes].filter(s => !visited.has(s))) {
                     const vertexBC = shapeB.getCenterVertex();
 
-                    if (shapeA.distanceVertices(vertexAC, vertexBC) < 100) {
+                    if (Shape.distanceVertices(vertexAC, vertexBC) < 150) {
                         const verticesA = shapeA.getVertices();
                         const verticesB = shapeB.getVertices();
 
@@ -318,59 +328,20 @@ class Tangram {
         }
     }
 
-    setAnchors(){
-        if(this.flags.drawAnchors){
-            this.flags.drawAnchors = false;
-            this.anchors = new Set();
-        }else{
-            this.flags.drawAnchors = true;
-
-            for(const shape of this.shapes){
-                for(const vertex of shape.getVertices()){
-                    const anchor = new Anchor(vertex.x, vertex.y);
-                    anchor.init(this);
-                    this.anchors.add(anchor);
-                }
-            }
-        }
-
-        this.forceReactUpdate();
-    }
-
-    saveLevel(){
-
-    }
-
-    addShapes(shapes: (Shape | ((tangram: Tangram) => Shape))[]) {
-        for (const shapeLike of shapes) {
-            const shape = shapeLike instanceof Shape ? shapeLike : shapeLike(this);
-            shape.init(this);
-            this.shapes.add(shape);
-        }
-    }
+    /* Events */
 
     addHandlers() {
         this.canvas.addEventListener('mousedown', this.onMouseEvent);
         this.canvas.addEventListener('mouseup', this.onMouseEvent);
         this.canvas.addEventListener('mousemove', this.onMouseEvent);
         this.canvas.addEventListener('click', this.onMouseEvent);
+
+        document.addEventListener('keydown', this.onKeyEvent);
     }
 
     onMouseEvent(event: MouseEvent) {
-        if(this.flags.drawAnchors){
-            for (const anchor of this.anchors) {
-                anchor.onMouseEvent(
-                    event.offsetX,
-                    event.offsetY,
-                    event
-                );
-            }
-        }
-        if(this.flags.drawLevel){
-
-        }
-        if(!this.flags.drawAnchors){
-            for (const shape of this.shapes) {
+        if(this.drawModes.has('shapes')){
+            for(const shape of this.shapes){
                 shape.onMouseEvent(
                     event.offsetX,
                     event.offsetY,
@@ -378,6 +349,41 @@ class Tangram {
                 );
             }
         }
+
+       /*  if(this.flags.drawAnchors){
+            for (const anchor of this.anchors) {
+                anchor.onMouseEvent(
+                    event.offsetX,
+                    event.offsetY,
+                    event
+                );
+            }
+        } */
+    }
+
+    onKeyEvent(event: KeyboardEvent){
+        if(event.type === 'keydown'){
+            if(this.selected){
+                event.code === 'ArrowUp' && (this.selected.y -= 1);
+                event.code === 'ArrowDown' && (this.selected.y += 1);
+                event.code === 'ArrowLeft' && (this.selected.x -= 1);
+                event.code === 'ArrowRight' && (this.selected.x += 1);
+            }
+        }
+    }
+
+    /* Static */
+
+    static getShapes(){
+        return [
+            new Square('sq1', 100, 100, [1, 1], 45),
+            new Triangle('tr1', 100, 100, [1, 1], -45),
+            new Triangle('tr1', 100, 100, [1, 1], 225),
+            new Triangle('tr2', 100, 100, [2, 2], 45),
+            new Triangle('tr2', 100, 100, [2, 2], 135),
+            new Triangle('tr3', 100, 100, [Math.SQRT2, Math.SQRT2], 90),
+            new Paralelogram('pr1', 100, 100, [Math.SQRT2 / 2, Math.SQRT2 / 2], 0),
+        ] as Shape[];
     }
 }
 

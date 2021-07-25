@@ -2,8 +2,9 @@ import {
     theme
 } from '@tangram-core';
 
-import {Shape} from '.';
-import {Tangram} from '..';
+import {
+    Shape
+} from '@tangram-game/shapes/shape';
 
 class Paralelogram extends Shape {
     get drawCoords(){
@@ -16,12 +17,13 @@ class Paralelogram extends Shape {
     }
 
     get rotation(){
-        return this._rotation;
+        return this.store.rotation;
     }
 
     set rotation(value: number){
-        this._rotation = Math.abs(value % 180);
-        console.log(this._rotation);
+        value = value % 180;
+        value = value < 0 ? 180 + value : value;
+        this.store.rotation = Math.abs(value);
     }
 
     getCenterVertex(){
@@ -35,7 +37,7 @@ class Paralelogram extends Shape {
             {x: this.drawCoords.x + this.size.w, y: this.drawCoords.y + this.size.h},
             {x: this.drawCoords.x - this.size.w, y: this.drawCoords.y + this.size.h}
         ].map(
-            v=>this.rotateVertex(
+            v=>Shape.rotateVertex(
                 this.getCenterVertex(),
                 v,
                 this.rotation
@@ -67,9 +69,9 @@ class Paralelogram extends Shape {
             }
         ].map(
             bs=>{
-                bs.a = this.rotateVertex(this.getCenterVertex(), bs.a, this.rotation);
-                bs.b = this.rotateVertex(this.getCenterVertex(), bs.b, this.rotation);
-                bs.c = this.rotateVertex(this.getCenterVertex(), bs.c, this.rotation);
+                bs.a = Shape.rotateVertex(this.getCenterVertex(), bs.a, this.rotation);
+                bs.b = Shape.rotateVertex(this.getCenterVertex(), bs.b, this.rotation);
+                bs.c = Shape.rotateVertex(this.getCenterVertex(), bs.c, this.rotation);
                 return bs;
             }
         );

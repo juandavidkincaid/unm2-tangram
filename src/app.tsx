@@ -7,7 +7,7 @@ import { app, AppTheme, theme } from '@tangram-core';
 import { ViewportStyle } from '@tangram-styling'
 import { NC } from '@tangram-util';
 
-import { TangramGameView } from '@tangram-game';
+import { TangramGameView } from '@tangram-src/game';
 
 const GlobalStyle = createGlobalStyle`
     *{

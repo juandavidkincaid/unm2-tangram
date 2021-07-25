@@ -10,7 +10,11 @@ import {
     mdiBug,
     mdiAnchor,
     mdiDraw,
-    mdiContentSave
+    mdiContentSave,
+    mdiMenuRight,
+    mdiMenuLeft,
+    mdiMenuDown,
+    mdiMenuUp
 } from '@mdi/js';
 import IconBase from '@mdi/react';
 const Icon = styled(IconBase)``;
@@ -27,7 +31,7 @@ import { theme, app } from '@tangram-core';
 
 import {
     Tangram
-} from './controller';
+} from '@tangram-game';
 
 const TangramGameViewLayout = styled.div`
     display: grid;
@@ -71,15 +75,21 @@ const TangramGameViewLayout = styled.div`
         }
 
         .controls{
-            display: flex;
+            display: grid;
 
-            flex-flow: row wrap;
-            justify-content: space-between;
+            grid-template-columns: repeat(5, 1fr);
+            grid-auto-rows: min-content;
+            row-gap: 10px;
+            column-gap: 10px;
+
+            place-content: start;
+            place-items: center;
+
 
             button{
                 display: grid;
-                width: 100px;
-                height: 100px; 
+                width: 120px;
+                height: 120px; 
 
                 grid-template-columns: 1fr;
                 grid-template-rows: 3fr 1fr;
@@ -180,16 +190,11 @@ const TangramGameView = NC('TangramGameView', ({ children }) => {
     useEffect(() => {
         if (canvasRef.current) {
             const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                canvas.width = canvas.clientWidth;
-                canvas.height = canvas.clientHeight;
-                tangram.forceReactUpdate = forceUpdate;
-                tangram.canvas = canvas;
-                tangram.ctx = ctx;
-                tangram.settleSize();
-                tangram.startGame();
-            }
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            tangram.forceReactUpdate = forceUpdate;
+            tangram.canvas = canvas;
+            tangram.startGame();
         }
     }, []);
 
@@ -217,38 +222,78 @@ const TangramGameView = NC('TangramGameView', ({ children }) => {
             </div>
             <div className='controls'>
                 <button onClick={()=>{
-                    if(tangram.selectedShape){
-                        tangram.selectedShape.rotation += 45;
+                    if(tangram.selected){
+                        tangram.selected.rotation += 45;
+                    }
+                }}>
+                    <Icon path={mdiRotateRight} size={1.5}/>
+                    <span>Rotar -45°</span>
+                </button>
+                <button onClick={()=>{
+                    if(tangram.selected){
+                        tangram.selected.rotation -= 45;
                     }
                 }}>
                     <Icon path={mdiRotateLeft} size={1.5}/>
                     <span>Rotar 45°</span>
                 </button>
-                <button 
-                    className={tangram.flags.debugLevel >= 1 ? 'on' : 'off'}
-                    onClick={()=>{tangram.flags.debugLevel = (tangram.flags.debugLevel + 1) % 4; tangram.forceReactUpdate();}}
-                >
-                    <Icon path={mdiBug} size={1.5}/>
-                    <span>Debug {tangram.flags.debugLevel >= 1 ? tangram.flags.debugLevel : 'Off'}</span>
+                <button onClick={()=>{
+                    if(tangram.selected){
+                        tangram.selected.y -= 20;
+                    }
+                }}>
+                    <Icon path={mdiMenuUp} size={1.5}/>
+                    <span>Move Up</span>
                 </button>
-                {/* <button 
-                    className={tangram.flags.snaping ? 'on' : 'off'}
-                    onClick={()=>{tangram.flags.snaping = !tangram.flags.snaping; tangram.forceReactUpdate();}}
+                <button onClick={()=>{
+                    if(tangram.selected){
+                        tangram.selected.y += 20;
+                    }
+                }}>
+                    <Icon path={mdiMenuDown} size={1.5}/>
+                    <span>Move Down</span>
+                </button>
+                <button onClick={()=>{
+                    if(tangram.selected){
+                        tangram.selected.x -= 20;
+                    }
+                }}>
+                    <Icon path={mdiMenuLeft} size={1.5}/>
+                    <span>Move Left</span>
+                </button>
+                <button onClick={()=>{
+                    if(tangram.selected){
+                        tangram.selected.x += 20;
+                    }
+                }}>
+                    <Icon path={mdiMenuRight} size={1.5}/>
+                    <span>Move Right</span>
+                </button>
+                <button 
+                    className={tangram.store.flags.snap ? 'on' : 'off'}
+                    onClick={()=>{tangram.store.flags.snap = !tangram.store.flags.snap; tangram.forceReactUpdate();}}
                 >
                     <Icon path={mdiVectorLine} size={1.5}/>
-                    <span>Snaping {tangram.flags.snaping ? 'On' : 'Off'}</span>
-                </button> */}
-                {tangram.flags.debugLevel >= 1 && <>
-                    <button 
+                    <span>Snapping {tangram.store.flags.snap ? 'On' : 'Off'}</span>
+                </button>
+                <button 
+                    className={tangram.store.flags.debugLevel >= 1 ? 'on' : 'off'}
+                    onClick={()=>{tangram.store.flags.debugLevel = (tangram.store.flags.debugLevel + 1) % 4; tangram.forceReactUpdate();}}
+                >
+                    <Icon path={mdiBug} size={1.5}/>
+                    <span>Debug {tangram.store.flags.debugLevel >= 1 ? tangram.store.flags.debugLevel : 'Off'}</span>
+                </button>
+                {tangram.store.flags.debugLevel >= 1 && <>
+                    {/* <button 
                         onClick={()=>tangram.setAnchors()}
                     >
                         <Icon path={mdiAnchor} size={1.5}/>
                         <span>Fijar Anclas</span>
                     </button>
                     <button
-                        className={tangram.flags.drawLevel ? 'on' : 'off'}
+                        className={tangram.store.flags.drawLevel ? 'on' : 'off'}
                         onClick={()=>{
-                            tangram.flags.drawLevel = !tangram.flags.drawLevel; tangram.forceReactUpdate();
+                            tangram.store.flags.drawLevel = !tangram.flags.drawLevel; tangram.forceReactUpdate();
                         }}
                     >
                         <Icon path={mdiDraw} size={1.5}/>
@@ -259,7 +304,7 @@ const TangramGameView = NC('TangramGameView', ({ children }) => {
                     }}>
                         <Icon path={mdiContentSave} size={1.5}/>
                         <span>Guardar Nivel</span>
-                    </button>
+                    </button> */}
                 </>}
             </div>
         </main>
